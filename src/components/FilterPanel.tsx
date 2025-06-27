@@ -23,9 +23,15 @@ const AI_SUBTOPICS: AISubtopic[] = [
 
 const SOURCES = [
   'MIT Technology Review',
-  'Wired',
-  'TechCrunch',
-  'ArXiv AI Papers'
+  'Wired AI',
+  'TechCrunch AI',
+  'VentureBeat AI',
+  'Microsoft Research',
+  'Microsoft AI Blog',
+  'Google AI Blog',
+  'Google Research',
+  'Anthropic',
+  'OpenAI Blog'
 ];
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({

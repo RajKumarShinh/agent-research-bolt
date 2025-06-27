@@ -34,6 +34,36 @@ const RSS_FEEDS = [
     name: 'VentureBeat AI',
     url: 'https://venturebeat.com/ai/feed/',
     category: 'Industry News'
+  },
+  {
+    name: 'Microsoft Research',
+    url: 'https://www.microsoft.com/en-us/research/feed/',
+    category: 'Big Tech Research'
+  },
+  {
+    name: 'Microsoft AI Blog',
+    url: 'https://blogs.microsoft.com/ai/feed/',
+    category: 'Big Tech Research'
+  },
+  {
+    name: 'Google AI Blog',
+    url: 'https://ai.googleblog.com/feeds/posts/default',
+    category: 'Big Tech Research'
+  },
+  {
+    name: 'Google Research',
+    url: 'https://research.google/feeds/publications.xml',
+    category: 'Big Tech Research'
+  },
+  {
+    name: 'Anthropic',
+    url: 'https://www.anthropic.com/news/rss.xml',
+    category: 'AI Labs'
+  },
+  {
+    name: 'OpenAI Blog',
+    url: 'https://openai.com/blog/rss.xml',
+    category: 'AI Labs'
   }
 ];
 
@@ -45,13 +75,14 @@ const AI_KEYWORDS = [
   'generative ai', 'openai', 'anthropic', 'google ai', 'microsoft ai',
   'autonomous systems', 'agentic', 'multimodal', 'chatbot', 'automation',
   'cognitive', 'reinforcement learning', 'supervised learning', 'unsupervised learning',
-  'algorithm', 'data science', 'predictive', 'classification', 'regression'
+  'algorithm', 'data science', 'predictive', 'classification', 'regression',
+  'claude', 'gemini', 'copilot', 'bard', 'palm', 'bert', 'research'
 ];
 
 // AI subtopic classification
 const SUBTOPIC_KEYWORDS = {
   'AI Agents': ['agent', 'agents', 'agentic', 'autonomous agent', 'multi-agent', 'chatbot'],
-  'LLMs': ['llm', 'large language', 'gpt', 'transformer', 'bert', 'language model'],
+  'LLMs': ['llm', 'large language', 'gpt', 'transformer', 'bert', 'language model', 'claude', 'gemini', 'palm'],
   'Robotics': ['robot', 'robotics', 'autonomous vehicle', 'drone', 'automation'],
   'Computer Vision': ['computer vision', 'image recognition', 'opencv', 'visual', 'object detection'],
   'NLP': ['nlp', 'natural language', 'text processing', 'sentiment analysis', 'translation'],
@@ -211,7 +242,7 @@ async function fetchRSSFeeds() {
     }
   }
   
-  cachedArticles = uniqueArticles.slice(0, 100); // Keep top 100 articles
+  cachedArticles = uniqueArticles.slice(0, 150); // Keep top 150 articles
   lastUpdateTime = new Date();
   
   console.log(`🎉 Fetched ${cachedArticles.length} unique AI articles total`);
