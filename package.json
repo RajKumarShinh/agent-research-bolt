@@ -27,7 +27,8 @@
     "cheerio": "^1.0.0-rc.12",
     "sqlite3": "^5.1.6",
     "uuid": "^9.0.1",
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
