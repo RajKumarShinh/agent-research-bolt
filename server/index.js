@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import Parser from 'rss-parser';
 import cron from 'node-cron';
+import techRadarRoutes from './routes/techRadar.js';
 
 const app = express();
 const parser = new Parser({
@@ -12,6 +13,9 @@ const parser = new Parser({
 
 app.use(cors());
 app.use(express.json());
+
+// Tech Radar API routes
+app.use('/api/tech-radar', techRadarRoutes);
 
 // RSS Feed configurations
 const RSS_FEEDS = [
@@ -340,4 +344,5 @@ app.listen(PORT, () => {
   console.log(`🌐 RSS Feed Server running on http://localhost:${PORT}`);
   console.log('📡 RSS feeds will be updated every 15 minutes');
   console.log(`🔍 Health check available at http://localhost:${PORT}/api/health`);
+  console.log(`🎯 Tech Radar API available at http://localhost:${PORT}/api/tech-radar`);
 });

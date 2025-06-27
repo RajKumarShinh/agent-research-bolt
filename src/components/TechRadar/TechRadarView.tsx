@@ -3,9 +3,9 @@ import { TechRadarTile } from './TechRadarTile';
 import { TechRadarFilterPanel } from './TechRadarFilterPanel';
 import { TechRadarModal } from './TechRadarModal';
 import { TechRadarFormModal } from './TechRadarFormModal';
-import { techRadarData as initialTechRadarData } from '../../data/techRadarData';
+import { useTechRadar } from '../../hooks/useTechRadar';
 import { TechRadarItem, TechRadarFilter } from '../../types';
-import { Grid, List, Filter, Search, BarChart, TrendingUp, Plus } from 'lucide-react';
+import { Grid, List, Filter, Search, BarChart, TrendingUp, Plus, RefreshCw, AlertCircle } from 'lucide-react';
 
 export const TechRadarView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -13,7 +13,6 @@ export const TechRadarView: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<TechRadarItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<TechRadarItem | null>(null);
-  const [techRadarData, setTechRadarData] = useState<TechRadarItem[]>(initialTechRadarData);
   const [filter, setFilter] = useState<TechRadarFilter>({
     search: '',
     category: 'all',
@@ -23,36 +22,40 @@ export const TechRadarView: React.FC = () => {
     sortBy: 'status'
   });
 
+  const {
+    items,
+    loading,
+    error,
+    lastUpdated,
+    addItem,
+    updateItem,
+    refreshItems
+  } = useTechRadar();
+
   const updateFilter = (newFilter: Partial<TechRadarFilter>) => {
     setFilter(prev => ({ ...prev, ...newFilter }));
   };
 
-  const handleAddTool = (toolData: Omit<TechRadarItem, 'id' | 'lastUpdated'>) => {
-    const newTool: TechRadarItem = {
-      ...toolData,
-      id: `custom-${Date.now()}`,
-      lastUpdated: new Date()
-    };
-    
-    setTechRadarData(prev => [newTool, ...prev]);
+  const handleAddTool = async (toolData: Omit<TechRadarItem, 'id' | 'lastUpdated'>) => {
+    try {
+      await addItem(toolData);
+    } catch (error) {
+      console.error('Failed to add tool:', error);
+    }
   };
 
-  const handleEditTool = (toolData: Omit<TechRadarItem, 'id' | 'lastUpdated'>) => {
+  const handleEditTool = async (toolData: Omit<TechRadarItem, 'id' | 'lastUpdated'>) => {
     if (!editingItem) return;
     
-    const updatedTool: TechRadarItem = {
-      ...toolData,
-      id: editingItem.id,
-      lastUpdated: new Date()
-    };
-    
-    setTechRadarData(prev => 
-      prev.map(item => item.id === editingItem.id ? updatedTool : item)
-    );
-    
-    // Update the selected item if it's currently being viewed
-    if (selectedItem?.id === editingItem.id) {
-      setSelectedItem(updatedTool);
+    try {
+      const updatedItem = await updateItem(editingItem.id, toolData);
+      
+      // Update the selected item if it's currently being viewed
+      if (selectedItem?.id === editingItem.id) {
+        setSelectedItem(updatedItem);
+      }
+    } catch (error) {
+      console.error('Failed to update tool:', error);
     }
   };
 
@@ -66,7 +69,7 @@ export const TechRadarView: React.FC = () => {
   };
 
   const filteredItems = useMemo(() => {
-    let filtered = techRadarData;
+    let filtered = items;
 
     // Search filter
     if (filter.search) {
@@ -131,7 +134,7 @@ export const TechRadarView: React.FC = () => {
     });
 
     return filtered;
-  }, [techRadarData, filter]);
+  }, [items, filter]);
 
   const hasActiveFilters = 
     filter.search || 
@@ -153,15 +156,15 @@ export const TechRadarView: React.FC = () => {
 
   // Calculate stats
   const stats = useMemo(() => {
-    const total = techRadarData.length;
-    const adopt = techRadarData.filter(item => item.status === 'Adopt').length;
-    const trial = techRadarData.filter(item => item.status === 'Trial').length;
-    const assess = techRadarData.filter(item => item.status === 'Assess').length;
-    const hold = techRadarData.filter(item => item.status === 'Hold').length;
-    const avgAdoption = Math.round(techRadarData.reduce((sum, item) => sum + item.adoptionLevel, 0) / total);
+    const total = items.length;
+    const adopt = items.filter(item => item.status === 'Adopt').length;
+    const trial = items.filter(item => item.status === 'Trial').length;
+    const assess = items.filter(item => item.status === 'Assess').length;
+    const hold = items.filter(item => item.status === 'Hold').length;
+    const avgAdoption = total > 0 ? Math.round(items.reduce((sum, item) => sum + item.adoptionLevel, 0) / total) : 0;
 
     return { total, adopt, trial, assess, hold, avgAdoption };
-  }, [techRadarData]);
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -177,6 +180,16 @@ export const TechRadarView: React.FC = () => {
                 </p>
               </div>
               <div className="flex items-center space-x-3">
+                {/* Refresh Button */}
+                <button
+                  onClick={refreshItems}
+                  disabled={loading}
+                  className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+
                 {/* Add Tool Button */}
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -221,6 +234,19 @@ export const TechRadarView: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Error Display */}
+            {error && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+                  <div>
+                    <h3 className="text-sm font-medium text-red-800">Connection Error</h3>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="mt-8 grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -313,35 +339,57 @@ export const TechRadarView: React.FC = () => {
         )}
 
         {/* Items Grid/List */}
-        <div className={
-          viewMode === 'grid'
-            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-            : 'space-y-4'
-        }>
-          {filteredItems.map(item => (
-            <TechRadarTile
-              key={item.id}
-              item={item}
-              viewMode={viewMode}
-              onClick={setSelectedItem}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex items-center space-x-3">
+              <RefreshCw className="h-6 w-6 text-blue-600 animate-spin" />
+              <span className="text-lg text-gray-600">Loading tech radar...</span>
+            </div>
+          </div>
+        ) : (
+          <div className={
+            viewMode === 'grid'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+              : 'space-y-4'
+          }>
+            {filteredItems.map(item => (
+              <TechRadarTile
+                key={item.id}
+                item={item}
+                viewMode={viewMode}
+                onClick={setSelectedItem}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Empty State */}
-        {filteredItems.length === 0 && (
+        {!loading && filteredItems.length === 0 && (
           <div className="text-center py-16">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
             <p className="text-gray-500 mb-4">
-              Try adjusting your search terms or filters to find more technologies.
+              {hasActiveFilters 
+                ? 'Try adjusting your search terms or filters to find more technologies.'
+                : 'Get started by adding your first technology to the radar.'
+              }
             </p>
-            <button
-              onClick={clearAllFilters}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Clear All Filters
-            </button>
+            {hasActiveFilters ? (
+              <button
+                onClick={clearAllFilters}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Clear All Filters
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Tool
+              </button>
+            )}
           </div>
         )}
       </main>
