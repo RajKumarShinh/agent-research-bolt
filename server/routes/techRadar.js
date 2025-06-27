@@ -1,7 +1,21 @@
 import express from 'express';
-import { supabase } from '../database/supabase.js';
+import { supabase, isSupabaseAvailable } from '../database/supabase.js';
 
 const router = express.Router();
+
+// Middleware to check if Supabase is available
+const requireSupabase = (req, res, next) => {
+  if (!isSupabaseAvailable()) {
+    return res.status(503).json({ 
+      error: 'Database service unavailable',
+      message: 'Supabase credentials are not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+    });
+  }
+  next();
+};
+
+// Apply middleware to all routes
+router.use(requireSupabase);
 
 // Helper function to transform database row to application format
 const transformDbItem = (dbItem) => ({
