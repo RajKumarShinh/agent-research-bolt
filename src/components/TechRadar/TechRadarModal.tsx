@@ -1,14 +1,19 @@
 import React from 'react';
-import { X, ExternalLink, Calendar, Tag, TrendingUp, Globe, Users } from 'lucide-react';
+import { X, ExternalLink, Calendar, Tag, TrendingUp, Globe, Users, Edit } from 'lucide-react';
 import { TechRadarItem } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TechRadarModalProps {
   item: TechRadarItem | null;
   onClose: () => void;
+  onEdit: (item: TechRadarItem) => void;
 }
 
-export const TechRadarModal: React.FC<TechRadarModalProps> = ({ item, onClose }) => {
+export const TechRadarModal: React.FC<TechRadarModalProps> = ({ 
+  item, 
+  onClose, 
+  onEdit 
+}) => {
   if (!item) return null;
 
   const getStatusColor = (status: string) => {
@@ -81,6 +86,10 @@ export const TechRadarModal: React.FC<TechRadarModalProps> = ({ item, onClose })
     }
   };
 
+  const handleEditClick = () => {
+    onEdit(item);
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="min-h-screen px-4 text-center">
@@ -98,10 +107,18 @@ export const TechRadarModal: React.FC<TechRadarModalProps> = ({ item, onClose })
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleEditClick}
+                  className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  title="Edit tool"
+                >
+                  <Edit className="h-5 w-5" />
+                </button>
                 {item.website && (
                   <button
                     onClick={() => window.open(item.website, '_blank')}
                     className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Visit website"
                   >
                     <ExternalLink className="h-5 w-5" />
                   </button>
@@ -109,6 +126,7 @@ export const TechRadarModal: React.FC<TechRadarModalProps> = ({ item, onClose })
                 <button
                   onClick={onClose}
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                  title="Close"
                 >
                   <X className="h-5 w-5" />
                 </button>

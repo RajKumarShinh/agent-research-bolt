@@ -2,14 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { TechRadarTile } from './TechRadarTile';
 import { TechRadarFilterPanel } from './TechRadarFilterPanel';
 import { TechRadarModal } from './TechRadarModal';
-import { techRadarData } from '../../data/techRadarData';
+import { TechRadarFormModal } from './TechRadarFormModal';
+import { techRadarData as initialTechRadarData } from '../../data/techRadarData';
 import { TechRadarItem, TechRadarFilter } from '../../types';
-import { Grid, List, Filter, Search, BarChart, TrendingUp } from 'lucide-react';
+import { Grid, List, Filter, Search, BarChart, TrendingUp, Plus } from 'lucide-react';
 
 export const TechRadarView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TechRadarItem | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<TechRadarItem | null>(null);
+  const [techRadarData, setTechRadarData] = useState<TechRadarItem[]>(initialTechRadarData);
   const [filter, setFilter] = useState<TechRadarFilter>({
     search: '',
     category: 'all',
@@ -21,6 +25,44 @@ export const TechRadarView: React.FC = () => {
 
   const updateFilter = (newFilter: Partial<TechRadarFilter>) => {
     setFilter(prev => ({ ...prev, ...newFilter }));
+  };
+
+  const handleAddTool = (toolData: Omit<TechRadarItem, 'id' | 'lastUpdated'>) => {
+    const newTool: TechRadarItem = {
+      ...toolData,
+      id: `custom-${Date.now()}`,
+      lastUpdated: new Date()
+    };
+    
+    setTechRadarData(prev => [newTool, ...prev]);
+  };
+
+  const handleEditTool = (toolData: Omit<TechRadarItem, 'id' | 'lastUpdated'>) => {
+    if (!editingItem) return;
+    
+    const updatedTool: TechRadarItem = {
+      ...toolData,
+      id: editingItem.id,
+      lastUpdated: new Date()
+    };
+    
+    setTechRadarData(prev => 
+      prev.map(item => item.id === editingItem.id ? updatedTool : item)
+    );
+    
+    // Update the selected item if it's currently being viewed
+    if (selectedItem?.id === editingItem.id) {
+      setSelectedItem(updatedTool);
+    }
+  };
+
+  const handleEditClick = (item: TechRadarItem) => {
+    setEditingItem(item);
+    setSelectedItem(null); // Close the detail modal
+  };
+
+  const closeEditModal = () => {
+    setEditingItem(null);
   };
 
   const filteredItems = useMemo(() => {
@@ -119,7 +161,7 @@ export const TechRadarView: React.FC = () => {
     const avgAdoption = Math.round(techRadarData.reduce((sum, item) => sum + item.adoptionLevel, 0) / total);
 
     return { total, adopt, trial, assess, hold, avgAdoption };
-  }, []);
+  }, [techRadarData]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -135,6 +177,15 @@ export const TechRadarView: React.FC = () => {
                 </p>
               </div>
               <div className="flex items-center space-x-3">
+                {/* Add Tool Button */}
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Tool
+                </button>
+                
                 <div className="text-sm text-gray-500">
                   {filteredItems.length} of {stats.total} items
                 </div>
@@ -295,10 +346,25 @@ export const TechRadarView: React.FC = () => {
         )}
       </main>
 
-      {/* Modal */}
+      {/* Modals */}
       <TechRadarModal
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
+        onEdit={handleEditClick}
+      />
+
+      <TechRadarFormModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={handleAddTool}
+        editingTool={null}
+      />
+
+      <TechRadarFormModal
+        isOpen={!!editingItem}
+        onClose={closeEditModal}
+        onSave={handleEditTool}
+        editingTool={editingItem}
       />
     </div>
   );
