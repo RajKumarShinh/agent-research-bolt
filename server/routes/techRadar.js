@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch tech radar items' });
     }
 
-    const transformedItems = items.map(transformDbItem);
+    const transformedItems = items ? items.map(transformDbItem) : [];
     
     console.log(`✅ Successfully fetched ${transformedItems.length} tech radar items`);
     res.json({
@@ -186,8 +186,8 @@ router.get('/:id/history', async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch item history' });
     }
     
-    console.log(`✅ Successfully fetched ${history.length} history entries`);
-    res.json(history);
+    console.log(`✅ Successfully fetched ${history ? history.length : 0} history entries`);
+    res.json(history || []);
   } catch (error) {
     console.error('❌ Error fetching item history:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -214,8 +214,8 @@ router.post('/snapshots', async (req, res) => {
 
     const snapshotData = {
       timestamp: new Date().toISOString(),
-      items: items.map(transformDbItem),
-      totalItems: items.length
+      items: items ? items.map(transformDbItem) : [],
+      totalItems: items ? items.length : 0
     };
 
     const { data: snapshot, error } = await supabase
@@ -256,8 +256,8 @@ router.get('/snapshots', async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch snapshots' });
     }
     
-    console.log(`✅ Successfully fetched ${snapshots.length} snapshots`);
-    res.json(snapshots);
+    console.log(`✅ Successfully fetched ${snapshots ? snapshots.length : 0} snapshots`);
+    res.json(snapshots || []);
   } catch (error) {
     console.error('❌ Error fetching snapshots:', error);
     res.status(500).json({ error: 'Internal server error' });
